@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Reaction Game</title>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>REACTION GAME</h1>
+            <h2>Click the shapes as quickly as you can!</h2>
+            <div class="info">
+                <p id="stopwatch">Time since last click: ~</p>
+                <input id="main-button" type="button" onclick="main()" value="START">
+                <p id="avg">Average reaction time: ~</p>
+            </div>
+        </div>
+    </header>
+    <div id="gamespace">
+
+    </div>
+    <script>
+        const colors = ["green", "blue", "red", "yellow", "purple", "orange"]; // colors for the buttons
+        const shapes = ["0%", "100%"]; // 0% - square ; 100% - circle
+        const minSize = 1; // minimum size for a shape, based on the root's default size (REM)
+        const sizeDiff = 19; // difference between max and min size (5rem - 2rem = 3rem) (REM)
+        const gamespace = document.getElementById("gamespace"); // the div in which the buttons will spawn
+
+        let timerRunning = false;
+        let times = [];
+        let ms = 0;
+        let s = 0;
+        let avg = 0;
+
+        function stopwatch() {
+            // makes it so that the button does not jitter as much
+            document.getElementById('stopwatch').textContent = (ms<10) ? `Time since last click: ${s}.0${ms}s` : `Time since last click: ${s}.${ms}s`;
+
+            ms++;
+            if (ms == 100) {
+                s++;
+                ms = 0;
+            }
+
+            setTimeout(stopwatch, 10); // we increment s every time ms reaches 100, so we wait 10 actual miliseconds to increment ms (10*100 = 1000 ms = 1s)
+        }
+
+        function makeBtn() {
+            const newBtn = document.createElement("div");
+            const size = minSize + (Math.random()*(sizeDiff+1));
+            const maxX = gamespace.offsetWidth - size*(parseFloat(getComputedStyle(document.documentElement).fontSize)); // maximum horizontal coordinate
+            const maxY = gamespace.offsetHeight - size*(parseFloat(getComputedStyle(document.documentElement).fontSize)); // maximum vertical coordinate
+
+            newBtn.id = "btn"; // adds an ID that will let us access it later
+
+            newBtn.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]; // adds a random color
+            newBtn.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)]; // adds a random shape
+
+            newBtn.style.width = `${size}rem`; // adds the size to be between the minimum and maximum (minSize + sizeDiff)
+            newBtn.style.height = newBtn.style.width
+
+            newBtn.style.position = "absolute";
+            
+            newBtn.style.top = `${Math.random()*maxY}px`;
+            newBtn.style.left = `${Math.random()*maxX}px`;
+            newBtn.addEventListener('click', gameLoop);
+            gamespace.appendChild(newBtn);
+        }
+
+        function gameLoop() {
+            if (ms != 0) {// does not add a time of 0s to the avg time after pressing "Start"
+                times.push(s + ms/100);
+                let sum = times.reduce(((x, y) => (x+y)), 0);
+                avg = sum/times.length;
+                document.getElementById("avg").textContent = `Average reaction time: ${avg.toFixed(2)}s`;
+            }
+            ms = 0;
+            s = 0;
+            const btn = document.getElementById("btn");
+            if (btn) {
+                btn.remove();
+            }
+            makeBtn();
+        }
+
+        function main() {
+            // resets the timer
+            times = [];
+            ms = 0;
+            s = 0;
+            document.getElementById("avg").textContent = `Average reaction time: ~` // resets the avg score when pressing the "Start" button
+
+            gameLoop()
+            if (!timerRunning) {
+                timerRunning = true;
+                stopwatch()
+            }
+
+        }
+    </script>
+</body>
+</html>
